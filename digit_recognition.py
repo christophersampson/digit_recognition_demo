@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, BatchNormalization
+from keras.callbacks import EarlyStopping
 
 from keras.models import load_model
 from confusion_matrix import create_confusion_matrix
@@ -14,14 +15,14 @@ from mpu.ml import one_hot2indices
 
 
 def main():
-    data_path = './data/mnist_png'
+    data_path = './data/mnist'
 
     training_path = join(data_path, 'training')
     test_path = join(data_path, 'testing')
     # training_path = './data/small_set'
-    # test_path = './data/small_set'
+    # test_path = './data/custom_set'
     # test_path = './data/mnist_png/testing'
-    #train(data_path=training_path)
+    train(data_path=training_path)
     test(data_path=test_path, plot=True)
 
 
@@ -63,6 +64,7 @@ def generate_matricies(categories_path, im_size=(28, 28), verbose=False):
 
     categories = listdir(categories_path)
 
+    print('Loading images...')
     for category_val, category in enumerate(categories):
 
         category_images = listdir(join(categories_path, category))
@@ -89,9 +91,9 @@ def generate_matricies(categories_path, im_size=(28, 28), verbose=False):
     return X, Y, categories
 
 
-def train(data_path, hidden_layer_sizes=[200, 100, 50, 30, 20],
+def train(data_path, hidden_layer_sizes=[784, 800, 10],
           im_size=(28, 28), dropout_fraction=0.2,
-          random_seed=1, epochs=10, val_fraction=0.15,
+          random_seed=1, epochs=25, val_fraction=0.15,
           model_name='digit.keras'):
     """
 
@@ -137,8 +139,16 @@ def train(data_path, hidden_layer_sizes=[200, 100, 50, 30, 20],
     model.compile(loss="binary_crossentropy", optimizer='sgd',
                   metrics=["accuracy"])
 
+    # Early stopping callback
+    early_stop = EarlyStopping(monitor='val_acc',
+                              min_delta=1e-3, patience=3,
+                              verbose=1, mode='auto')
+    callbacks_list = [early_stop]
+
     # Model training
-    model.fit(train_X, train_Y, validation_data=(validation_X, validation_Y), epochs=epochs, batch_size=128, verbose=2)
+    model.fit(train_X, train_Y, validation_data=(validation_X, validation_Y),
+              epochs=epochs, batch_size=128, verbose=2,
+              callbacks=callbacks_list)
 
     # Save the model
     print("Saving model..")
@@ -155,8 +165,8 @@ def test(data_path, model_name='digit.keras', plot=True):
     # show the accuracy on the testing set
     print("Evaluating the testing set...")
     (loss, accuracy) = model.evaluate(test_X, test_Y,
-                                      batch_size=128, verbose=1)
-    print("loss={:.4f}, accuracy: {:.4f}%".format(loss, accuracy * 100))
+                                      batch_size=128, verbose=2)
+    print("Accuracy: {:.2f}%".format(accuracy * 100))
 
     if plot:
         pred_scores = model.predict(test_X,
@@ -164,7 +174,8 @@ def test(data_path, model_name='digit.keras', plot=True):
         pred_Y = np.argmax(pred_scores, axis=1)
         create_confusion_matrix(actual=one_hot2indices(test_Y),
                                 predicted=pred_Y,
-                                class_names=categories)
+                                class_names=categories,
+                                normalise=False)
 
 
 if __name__ == '__main__':

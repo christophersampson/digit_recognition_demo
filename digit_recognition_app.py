@@ -1,19 +1,17 @@
+import argparse
 import cv2
 from keras.models import load_model
 from digit_recognition import pre_processing
 
-show = True
-image_path = 'test_image.jpg'
 
+def main(image_path, invert=False, show=False, scores=False):
 
-# image_path = 'data/mnist_png/training/1/99.png'
-
-def main():
     # Load a saved model
     model = load_model('digit.keras')
     image = cv2.imread(image_path)
-    processed_image, x = pre_processing(image, invert=True)
+    processed_image, x = pre_processing(image, invert=invert)
 
+    # Show the image
     if show:
         cv2.imshow('processed_image', processed_image)
         cv2.waitKey(0)  # Wait for a keypress
@@ -25,13 +23,24 @@ def main():
     y = Y[0]  # Get result from matrix
 
     # Show the scores for each category
-    for i in range(len(y)):
-        score_pc = round(y[i] * 100, 1)
-        print(i, ': ', score_pc, '%')
+    if scores:
+        for i in range(len(y)):
+            score_pc = round(y[i] * 100, 1)
+            print(i, ': ', score_pc, '%')
 
     # Show the top prediction
     print('\nPrediction: ', y.argmax())
 
 
 if __name__ == '__main__':
-    main()
+
+    # Construct input parameter parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--image', help='Path to the image')
+    parser.add_argument('--show', default=False, help='Show the image. True/False')
+    parser.add_argument('--invert', default=False, help='Invert the image. True/False')
+    parser.add_argument('--scores', default=False, help='Show the scores. True/False')
+    args = parser.parse_args()
+
+    # Run the main code
+    main(image_path=args.image, invert=args.invert, show=args.show)
