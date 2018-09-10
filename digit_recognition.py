@@ -26,7 +26,7 @@ def main():
     test(data_path=test_path, plot=True)
 
 
-def pre_processing(image, im_size=(28, 28), invert=False):
+def pre_processing(image, im_size=(28, 28), invert=False, thresh=5):
     """
 
     Pre-processing function.
@@ -42,7 +42,8 @@ def pre_processing(image, im_size=(28, 28), invert=False):
     image = cv2.resize(image, im_size)
     if invert:
         image = cv2.bitwise_not(image)
-    _, image = cv2.threshold(image, 5, 255, cv2.THRESH_BINARY)
+    if thresh is not None:
+        _, image = cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY)
     image = np.array(image)
     return image, image.flatten()
 
