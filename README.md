@@ -1,2 +1,2 @@
-# digit-recognition-demo
-Demonstration of number recognition using Keras for Blast Furnace Newcastle.
+# Digit Recognition Demo
+Demonstration of digit recognition (MNIST dataset) using Keras feedforward neural network.
